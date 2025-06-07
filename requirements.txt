@@ -10,3 +10,4 @@ pyyaml
 requests
 black
 flake8
+pytest-cov

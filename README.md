@@ -1,4 +1,5 @@
 # BedrockChat
+
 A further implemenation of Bedrock chat interface from v1 (week1).
 A streamlit based chat interface for Amazon Bedrock foundation models with a Streamlit frontend and Flask API backend. Currently supports Claude, Nova, and Mistral models with session management and usage logging.
 
@@ -15,6 +16,8 @@ A streamlit based chat interface for Amazon Bedrock foundation models with a Str
   - Profanity and topic blocking
   - PII Blocks/Masks
 - API Key Authentication
+- Test Suite
+  - Current coverage: 61%
 
 ## Setup
 
@@ -63,6 +66,7 @@ Access the UI at `http://localhost:8501`
 - `bedrock.py` - Bedrock client and model handling
 - `streamlit.py` - Web interface and chat management
 - `logger.py` - Session and interaction logging
+- `tests.py` - Overall test suite for pipeline
 
 ## API Endpoints
 
@@ -114,7 +118,7 @@ Logs are stored in `session_logs/` with detailed metrics for each interaction:
 
 Run tests:
 ```bash
-pytest tests.py
+pytest tests.py -v --cov=. --cov-report=term-missing
 ```
 
 ## License
