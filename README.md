@@ -11,6 +11,9 @@ A streamlit based chat interface for Amazon Bedrock foundation models with a Str
 - Session Management & Chat History
 - Detailed Usage Logging
 - Basic Guardrail Support
+  - Currently supporting prompt and response filters
+  - Profanity and Specific Topic blocking
+  - PII Blocks/Masks
 - API Key Authentication
 
 ## Setup
