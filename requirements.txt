@@ -1,5 +1,12 @@
 flask
+flask-restx
 boto3
+python-dotenv
 pytest
 coverage
 streamlit
+python-jose
+pyyaml
+requests
+black
+flake8
