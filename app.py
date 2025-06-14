@@ -8,6 +8,7 @@ from flask_restx import Api, Resource, fields
 from bedrock import call_bedrock, SUPPORTED_MODELS
 from logger import log_chat_request, log_error, log_model_usage, get_session_logger
 from dotenv import load_dotenv
+from rag import RAGSystem
 import boto3
 import json
 import os
@@ -39,6 +40,8 @@ ns = api.namespace('', description='AI Chat Operations')
 chat_request = api.model('ChatRequest', {
     'message': fields.String(required=True, description='The message to send to the model'),
     'model': fields.String(required=False, description='Model to use (claude-2, nova, mistral)', enum=list(SUPPORTED_MODELS.keys()), default='claude-2'),
+    'use_rag': fields.Boolean(required=False, description='Whether to use RAG for neuroscience context', default=False),
+    'num_chunks': fields.Integer(required=False, description='Number of context chunks to retrieve', default=3),
 })
 
 chat_response = api.model('ChatResponse', {
@@ -48,6 +51,9 @@ chat_response = api.model('ChatResponse', {
 
 # Initialize Bedrock client
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+
+# Initialize RAG system
+rag_system = RAGSystem()
 
 # chat session history
 memory_store = {}
@@ -79,7 +85,7 @@ def check_guardrail(text: str, source: str = "INPUT") -> dict:
         # Call ApplyGuardrail API
         response = bedrock.apply_guardrail(
             guardrailIdentifier=guardrail_id,
-            guardrailVersion="2",  # Default to version 2 with some customizations
+            guardrailVersion="3",  # Default to version 3 with some customizations
             source=source,
             content=[{
                 "text": {
@@ -135,6 +141,8 @@ class Chat(Resource):
             data = request.json
             user_msg = data.get("message")
             model = data.get("model", "claude-2")
+            use_rag = data.get("use_rag", False)
+            num_chunks = data.get("num_chunks", 3)
 
             # Validate request
             if not user_msg:
@@ -149,6 +157,29 @@ class Chat(Resource):
 
             # Pull full message history
             messages = memory_store.get(session_id, []).copy()
+
+            # Get RAG context if enabled
+            rag_stats = {"enabled": False}
+            if use_rag:
+                try:
+                    context = rag_system.get_relevant_context(user_msg, top_k=num_chunks)
+                    if context:
+                        # Collect RAG stats
+                        results = rag_system.search(user_msg, top_k=num_chunks)
+                        rag_stats = {
+                            "enabled": True,
+                            "chunks_retrieved": len(results),
+                            "avg_relevance_score": sum(score for _, score in results) / len(results) if results else 0,
+                            "sources": list(set(doc.metadata["source"] for doc, _ in results)),
+                            "pages": list(set(doc.metadata["page"] for doc, _ in results))
+                        }
+                        user_msg = f"""Based on this neuroscience context:
+                        {context}
+                        
+                        Answer this question: {user_msg}"""
+                except Exception as e:
+                    print(f"RAG error: {str(e)}")
+                    # Continue without RAG if it fails
 
             # Add user message
             messages.append({"role": "user", "content": user_msg})
@@ -182,7 +213,9 @@ class Chat(Resource):
                 "guardrails": {
                     "input": input_guardrail,
                     "output": output_guardrail
-                }
+                },
+                "rag": rag_stats,
+                "num_chunks_requested": num_chunks if use_rag else None
             })
 
             # Store in memory

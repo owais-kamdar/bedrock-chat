@@ -11,3 +11,7 @@ requests
 black
 flake8
 pytest-cov
+PyPDF2
+numpy
+faiss-cpu
+pinecone[grpc]
