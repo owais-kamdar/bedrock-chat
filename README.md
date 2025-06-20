@@ -73,6 +73,7 @@ python streamlit run streamlit.py
 4. To access the dashboard open a new terminal and run:
 ```bash
 python streamlit run dashboard.py
+```
 
 Access the UI at `http://localhost:8501`
 
