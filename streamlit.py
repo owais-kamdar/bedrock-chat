@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 import os
 from rag import RAGSystem
 import numpy as np
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -27,9 +28,11 @@ st.set_page_config(
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "session_id" not in st.session_state:
-    st.session_state.session_id = "streamlit-user-1"
+    st.session_state.session_id = str(uuid.uuid4())
 if "api_key" not in st.session_state:
-    st.session_state.api_key = os.getenv("API_KEY", "")
+    st.session_state.api_key = ""
+if "user_id" not in st.session_state:
+    st.session_state.user_id = f"user-{str(uuid.uuid4())}"
 if "rag" not in st.session_state:
     st.session_state.rag = RAGSystem()
     # Check if documents are already indexed
@@ -72,7 +75,23 @@ except Exception:
 with st.sidebar:
     st.title("Settings")
     
-    # API Key input
+    # API Key section
+    st.markdown("### API Key")
+    if not st.session_state.api_key:
+        if st.button("Generate New API Key"):
+            try:
+                response = requests.post(
+                    f"{API_URL}/api-keys",
+                    json={"user_id": st.session_state.user_id}
+                )
+                if response.status_code == 201:
+                    st.session_state.api_key = response.json()["api_key"]
+                    st.success("API key generated successfully!")
+                else:
+                    st.error("Failed to generate API key")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+    
     api_key = st.text_input(
         "API Key",
         value=st.session_state.api_key,
@@ -141,7 +160,7 @@ with chat_container:
 # Chat input
 if prompt := st.chat_input("Type your message..."):
     if not st.session_state.api_key:
-        st.error("Please enter an API key in the sidebar")
+        st.error("Please generate or enter an API key in the sidebar")
     else:
         # Immediately show user message
         with st.chat_message("user"):

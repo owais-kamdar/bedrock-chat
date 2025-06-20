@@ -16,9 +16,10 @@ s3 = boto3.client("s3")
 
 # Constants
 BUCKET_NAME = os.getenv("RAG_BUCKET")
+FILE_FOLDER = os.getenv("FILE_FOLDER")
 PDF_FILES = [
-    "Brain_Facts_BookHighRes.pdf",
-    "Neuroscience.Science.of.the.Brain.pdf"
+    f"{FILE_FOLDER}/Brain_Facts_BookHighRes.pdf",
+    f"{FILE_FOLDER}/Neuroscience.Science.of.the.Brain.pdf"
 ]
 
 # Chunking parameters
@@ -37,7 +38,7 @@ class RAGSystem:
         namespaces = list(stats.namespaces.keys())
         if namespaces:
             self._current_namespace = namespaces[0]
-            print(f"Using existing namespace: {self._current_namespace}")
+            # print(f"Using existing namespace: {self._current_namespace}")
     
     # Clean text by removing extra whitespace and normalizing while preserving important punctuation
     def clean_text(self, text: str) -> str:

@@ -15,3 +15,5 @@ PyPDF2
 numpy
 faiss-cpu
 pinecone[grpc]
+pandas
+plotly

@@ -65,8 +65,12 @@ python app.py
 
 3. In a separate terminal, start the Streamlit interface:
 ```bash
-python -m streamlit run streamlit.py
+python streamlit run streamlit.py
 ```
+
+4. To access the dashboard open a new terminal and run:
+```bash
+python streamlit run dashboard.py
 
 Access the UI at `http://localhost:8501`
 
@@ -80,18 +84,21 @@ Access the UI at `http://localhost:8501`
 - `initialize_rag.py` - Script for setting up and indexing RAG documents
 - `vector_store.py` - Vector database interface for document storage and retrieval
 - `rag.py` - RAG system for document processing and context retrieval
+- `api_manager.py` - API key management and authentication
+- `dashboard.py` - Analytics dashboard for session monitoring and performance metrics
 
 ## API Endpoints
 
 - `POST /chat/<session_id>` - Send a message in a chat session with optional RAG context
 - `GET /models` - List available models (claude-2, nova, mistral)
 - `POST /test` - Test endpoint for direct model interaction
+- `POST /api-keys` - Creating API keys
 
 All endpoints require an `X-API-KEY` header matching the one in your `.env` file.
 
-## Logging
+## Logging (Updated)
 
-Logs are stored in `session_logs/` with detailed metrics for each interaction:
+Logs are stored in S3 under the `logs/` folder with detailed metrics for each interaction:
 - Message counts and timestamps
 - Input/output character and token counts
 - Model selection
@@ -110,22 +117,20 @@ Logs are stored in `session_logs/` with detailed metrics for each interaction:
 - Topic-based filtering
 - Response quality checks
 
-### 3. Additional Models
-- Llama
-- Deepseek
+### 3. Security -- WEEK 5
+- API management
+- Data Privacy (AWS S3)
 
-### 4. Deployment
+### 4. Analytics -- WEEK 5
+- Dashboards
+- Reports
+
+### 5. Deployment
 - AWS deployment options:
   - App Runner
   - EC2
 - Monitoring and alerts
 
-### 5. Security
-- Rate limiting
-
-### 6. Analytics
-- Dashboards
-- Reports
 
 ## Development
 
@@ -163,6 +168,27 @@ The project now includes a fully functional Retrieval Augmented Generation (RAG)
   - [Brain Facts Book](https://www.brainfacts.org/-/media/Brainfacts2/BrainFacts-Book/Brain_Facts_BookHighRes.pdf)
   - [Neuroscience: Science of the Brain](https://brain.mcmaster.ca/BrainBee/Neuroscience.Science.of.the.Brain.pdf)
 
+
+### Week 5: Dashboarding and Security
+Built a comprehensive dashboard on a streamlit interface and added API key management for better app security:
+
+- **Analytics Dashboard**
+  - Session-based analytics with detailed metrics
+  - Conversation history with detailed message stats
+
+- **Data Visualization**
+  - Response time tracking by message
+  - Input/output token usage metrics
+
+- **Security and API Management**
+  - API key generation and management
+  - User-based access control
+  - Secure key storage and validation
+
+- **AWS S3 Storage**
+  - Centralized storage for logs, RAG documents, and API keys
+  - Organized folder structure: `/logs/`, `/rag/`, `/api_keys/`
+  
 ## License
 
 MIT License

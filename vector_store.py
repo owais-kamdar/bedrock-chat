@@ -67,6 +67,8 @@ class VectorStore:
             # Connect to index
             self.index = self.pc.Index(self.index_name)
             
+            # Check if index is ready
+            
         except Exception as e:
             print(f"Error during index creation: {str(e)}")
             print("Attempting to connect to existing index...")

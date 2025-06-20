@@ -1,41 +1,32 @@
 """
 This module is used to log chat sessions and interactions.
-Will be used to track model usage and performance and create dashboards in the future.
+Logs are stored in S3 for better persistence and accessibility.
 """
 
-import logging
-from datetime import datetime
-import os
+import boto3
 import json
+import os
+from datetime import datetime
 from typing import Dict
+from io import StringIO
 
-# Create logs directory if it doesn't exist
-LOGS_DIR = "session_logs"
-if not os.path.exists(LOGS_DIR):
-    os.makedirs(LOGS_DIR, mode=0o755)
-
-class SessionLogger:
+class S3Logger:
+    # S3 folder for logs
+    LOGS_FOLDER = 'logs'
+    
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.start_time = datetime.now()
         self.message_count = 0
         
-        # Create session-specific log file
-        self.log_file = os.path.join(LOGS_DIR, f"{session_id}_{self.start_time.strftime('%Y%m%d_%H%M%S')}.log")
+        # Initialize S3 client
+        self.s3 = boto3.client('s3')
+        self.bucket = os.getenv('RAG_BUCKET')
+        if not self.bucket:
+            raise ValueError("RAG_BUCKET environment variable not set")
         
-        # Configure session logger
-        self.logger = logging.getLogger(session_id)
-        self.logger.setLevel(logging.INFO)
-        
-        # Remove any existing handlers
-        self.logger.handlers = []
-        
-        # Add file handler for this session
-        file_handler = logging.FileHandler(self.log_file)
-        file_handler.setFormatter(
-            logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        )
-        self.logger.addHandler(file_handler)
+        # Create log buffer
+        self.log_buffer = StringIO()
         
         # Log session start
         self.log_event("SESSION_START", {
@@ -45,11 +36,33 @@ class SessionLogger:
     
     def log_event(self, event_type: str, data: Dict):
         """Log an event in JSON format"""
-        self.logger.info(json.dumps({
+        event = {
             "event": event_type,
             "timestamp": datetime.now().isoformat(),
             "data": data
-        }))
+        }
+        
+        # Add to buffer
+        self.log_buffer.write(json.dumps(event) + "\n")
+        
+        # Write to S3
+        self._write_to_s3()
+    
+    def _write_to_s3(self):
+        """Write current buffer to S3"""
+        try:
+            # Generate S3 key based on session and date
+            date_str = self.start_time.strftime('%Y%m%d')
+            key = f'{self.LOGS_FOLDER}/{date_str}/{self.session_id}.log'
+            
+            # Upload buffer content
+            self.s3.put_object(
+                Bucket=self.bucket,
+                Key=key,
+                Body=self.log_buffer.getvalue()
+            )
+        except Exception as e:
+            print(f"Error writing to S3: {str(e)}")
     
     def end_session(self):
         """Log session end with summary metrics"""
@@ -65,14 +78,18 @@ class SessionLogger:
         }
         
         self.log_event("SESSION_END", summary)
+        
+        # Final write and close buffer
+        self._write_to_s3()
+        self.log_buffer.close()
 
 # Global store for session loggers
-session_loggers: Dict[str, SessionLogger] = {}
+session_loggers: Dict[str, S3Logger] = {}
 
-def get_session_logger(session_id: str) -> SessionLogger:
+def get_session_logger(session_id: str) -> S3Logger:
     """Get or create a session logger"""
     if session_id not in session_loggers:
-        session_loggers[session_id] = SessionLogger(session_id)
+        session_loggers[session_id] = S3Logger(session_id)
     return session_loggers[session_id]
 
 def log_chat_request(session_id: str, model: str, prompt: str, response: str = "", duration_ms: float = 0):

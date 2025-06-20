@@ -1,6 +1,5 @@
 """
-Flask application that provides an API endpoint for Claude-2 Bedrock foundation models.
-Some models (Deepseek, Meta-Llama) are not available for on-demand use.
+Flask application that provides an API endpoint for Bedrock foundation models.
 """
 
 from flask import Flask, request, jsonify
@@ -9,6 +8,7 @@ from bedrock import call_bedrock, SUPPORTED_MODELS
 from logger import log_chat_request, log_error, log_model_usage, get_session_logger
 from dotenv import load_dotenv
 from rag import RAGSystem
+from api_manager import APIManager
 import boto3
 import json
 import os
@@ -49,21 +49,26 @@ chat_response = api.model('ChatResponse', {
     'model': fields.String(description='Model used')
 })
 
-# Initialize Bedrock client
-bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+api_key_request = api.model('APIKeyRequest', {
+    'user_id': fields.String(required=True, description='User ID to create API key for')
+})
 
-# Initialize RAG system
+api_key_response = api.model('APIKeyResponse', {
+    'api_key': fields.String(description='Generated API key')
+})
+
+# Initialize clients
+bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+api_manager = APIManager()
 rag_system = RAGSystem()
 
 # chat session history
 memory_store = {}
 
-# check if api is valid. going to add further authentication in the future.
 def check_api_key():
-    """Check if the API key in the request header matches the expected key."""
+    """Check if the API key in the request header is valid"""
     api_key = request.headers.get('X-API-KEY')
-    expected_key = os.getenv('API_KEY')
-    if not api_key or api_key != expected_key:
+    if not api_key or not api_manager.validate_api_key(api_key):
         api.abort(401, "Invalid or missing API key")
 
 def check_guardrail(text: str, source: str = "INPUT") -> dict:
@@ -108,6 +113,26 @@ def check_guardrail(text: str, source: str = "INPUT") -> dict:
             "passed": False,
             "reason": f"Guardrail error: {str(e)}"
         }
+
+# API key management endpoints
+@ns.route('/api-keys')
+class APIKeys(Resource):
+    @api.expect(api_key_request)
+    @api.marshal_with(api_key_response, code=201, description='API key created')
+    @api.doc(responses={
+        201: 'API key created',
+        400: 'Validation error'
+    })
+    def post(self):
+        """Create a new API key"""
+        data = request.json
+        user_id = data.get('user_id')
+        
+        if not user_id:
+            api.abort(400, "user_id is required")
+            
+        api_key = api_manager.create_api_key(user_id)
+        return {'api_key': api_key}, 201
 
 # list available models
 @ns.route('/models')
