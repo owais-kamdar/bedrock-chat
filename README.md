@@ -8,16 +8,18 @@ A streamlit based chat interface for Amazon Bedrock foundation models with a Str
   - Claude-2
   - Nova
   - Mistral
-- Basic Guardrail Support
+- Guardrail Support
   - Prompt and response filters
   - Profanity and topic blocking
   - PII Blocks/Masks
+- Comprehensive Dashboard
+  - Usage statistics
+  - Session Filtering
+  - Token count, response time, conversation history, etc
 - API Key Authentication
 - RAG (Retrieval Augmented Generation)
   - PDF document indexing
   - Semantic search with Pinecone
-  - Context-aware responses
-  - Detailed Usage Logging
 - Test Suite
   - Current coverage: 62%
 
