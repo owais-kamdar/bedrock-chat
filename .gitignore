@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Environment Variables & Secrets
+.env
+config/.env
+*.key
+*.pem
+
+# OS
+.DS_Store
+.DS_Store?
+Thumbs.db
+
+# Testing & Coverage
+.coverage
+.pytest_cache/
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Logging
+logs/
+*.log
+
+# Flask
+instance/
+.webassets-cache
+
+# AWS & Large Files
+AWSCLIV2.pkg
+*.pkg
+*.dmg
+*.iso
+
+# pyenv
+.python-version
+
+# Streamlit
+.streamlit/secrets.toml 
