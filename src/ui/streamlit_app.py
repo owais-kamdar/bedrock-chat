@@ -41,8 +41,7 @@ if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
 if "api_key" not in st.session_state:
     st.session_state.api_key = ""
-if "user_id" not in st.session_state:
-    st.session_state.user_id = user_manager.generate_user_id()
+# Note: user_id will be set manually by user in sidebar
 if "rag" not in st.session_state:
     st.session_state.rag = RAGSystem()
     # Check if documents are already indexed
@@ -87,10 +86,40 @@ except Exception:
 with st.sidebar:
     st.title("Settings")
     
+    # User ID section
+    st.markdown("### 👤 User ID")
+    user_id_input = st.text_input(
+        "Enter User ID",
+        value=st.session_state.get("user_id", ""),
+        help="Enter a unique user ID or generate a new one"
+    )
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Use This ID"):
+            if user_id_input.strip():
+                st.session_state.user_id = user_id_input.strip()
+                st.success(f"Using user ID: {st.session_state.user_id}")
+                st.rerun()
+            else:
+                st.error("Please enter a valid user ID")
+    
+    with col2:
+        if st.button("Generate New"):
+            st.session_state.user_id = user_manager.generate_user_id()
+            st.success(f"Generated: {st.session_state.user_id}")
+            st.rerun()
+    
+    # Show current user ID
+    if "user_id" in st.session_state:
+        st.info(f"Current User: **{st.session_state.user_id}**")
+    
+    st.markdown("---")
+    
     # API Key section
     st.markdown("### API Key")
     if not st.session_state.api_key:
-        if st.button("Generate New API Key"):
+        if st.button("Generate New API Key") and "user_id" in st.session_state:
             try:
                 response = requests.post(
                     f"{API_URL}/api-keys",
@@ -137,7 +166,7 @@ with st.sidebar:
             st.write(f"- {key}: {value}")
         
         # Upload button
-        if st.button("Upload & Index File"):
+        if st.button("Upload & Index File") and "user_id" in st.session_state:
             with st.spinner("Uploading and indexing file..."):
                 try:
                     # Read file content
@@ -192,8 +221,8 @@ with st.sidebar:
                     else:
                         st.error("Failed to delete file")
     
-    # Load user files on startup
-    if not st.session_state.user_files:
+    # Load user files on startup (only if user_id is set)
+    if not st.session_state.user_files and "user_id" in st.session_state:
         st.session_state.user_files = st.session_state.rag.list_user_files(st.session_state.user_id)
     
     st.markdown("---")

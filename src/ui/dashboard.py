@@ -509,36 +509,83 @@ def get_analytics():
 
 analytics = get_analytics()
 
-# Load log data first to get users from chat sessions
+# Load available dates first
 available_dates = analytics.get_available_dates()
-if available_dates:
-    # Default to all available dates for user detection
-    all_date_codes = available_dates
-    df_for_users = analytics.load_logs(all_date_codes)
-    users_from_logs = analytics.get_users_from_logs(df_for_users)
-else:
-    users_from_logs = []
 
 # Sidebar - RAG Files and Filters
 with st.sidebar:
     st.title("Filters & Info")
     
+    # Date Filter FIRST - so it can influence user selection
+    st.header("📅 Date Range")
+    
+    if available_dates:
+        # Convert to readable format
+        date_options = {}
+        for date_str in available_dates:
+            try:
+                date_obj = datetime.strptime(date_str, '%Y%m%d')
+                readable_date = date_obj.strftime('%Y-%m-%d')
+                date_options[readable_date] = date_str
+            except:
+                continue
+        
+        # Select dates for the filter
+        selected_dates = st.multiselect(
+            "Select dates (leave empty for overview of all dates):",
+            options=list(date_options.keys()),
+            default=[]  # Default to no dates selected for overview
+        )
+        
+        # Convert back to internal format
+        selected_date_codes = [date_options[date] for date in selected_dates]
+    else:
+        st.warning("No log data found")
+        selected_date_codes = []
+    
+    st.markdown("---")
+    
+    # NOW determine users based on selected dates
+    if selected_date_codes:
+        # Use selected dates to get relevant users
+        df_for_users = analytics.load_logs(selected_date_codes)
+        users_from_logs = analytics.get_users_from_logs(df_for_users)
+        # Also filter document users by activity on selected dates (if they have log activity)
+        users_with_documents = analytics.get_active_users()
+        # Only show document users who also have log activity on selected dates
+        filtered_doc_users = [user for user in users_with_documents if user in users_from_logs]
+        all_active_users = sorted(list(set(filtered_doc_users + users_from_logs)))
+    elif available_dates:
+        # Default to all available dates for user detection when no specific dates selected
+        all_date_codes = available_dates
+        df_for_users = analytics.load_logs(all_date_codes)
+        users_from_logs = analytics.get_users_from_logs(df_for_users)
+        users_with_documents = analytics.get_active_users()
+        all_active_users = sorted(list(set(users_with_documents + users_from_logs)))
+    else:
+        users_from_logs = []
+        all_active_users = []
+    
     # User Filter Section
     st.header("👤 User Analytics")
     
     # Get users from both document uploads and chat logs
-    users_with_documents = analytics.get_active_users()
     user_documents = analytics.get_user_documents()
     
-    # Combine users from both sources
-    all_active_users = sorted(list(set(users_with_documents + users_from_logs)))
-    
-    # User selection
-    selected_user = st.selectbox(
-        "Select User:",
-        options=[''] + all_active_users,
-        format_func=lambda x: f"👤 {x}" if x else "All Users"
-    )
+    # User selection - now properly filtered by selected dates
+    if selected_date_codes and not all_active_users:
+        st.info("No users found with activity on selected dates")
+        selected_user = st.selectbox(
+            "Select User:",
+            options=[''],
+            format_func=lambda x: "No users available"
+        )
+    else:
+        selected_user = st.selectbox(
+            "Select User:",
+            options=[''] + all_active_users,
+            format_func=lambda x: f"👤 {x}" if x else "All Users"
+        )
     
     # User document summary
     if selected_user:
@@ -568,7 +615,7 @@ with st.sidebar:
         all_user_set.discard('')
         all_user_set = {user for user in all_user_set if user and not user.startswith('temp_')}
         
-        st.write(f"Active users: {len(all_user_set)}")
+        st.write(f"Total users: {len(all_user_set)}")
         st.write(f"Total documents: {len(user_documents)}")
         if user_documents:
             total_size = sum(doc['size'] for doc in user_documents)
@@ -592,33 +639,6 @@ with st.sidebar:
         st.info("No base RAG documents found")
     
     st.markdown("---")
-    
-    # Date Filter
-    st.header("📅 Date Range")
-    
-    if available_dates:
-        # Convert to readable format
-        date_options = {}
-        for date_str in available_dates:
-            try:
-                date_obj = datetime.strptime(date_str, '%Y%m%d')
-                readable_date = date_obj.strftime('%Y-%m-%d')
-                date_options[readable_date] = date_str
-            except:
-                continue
-        
-        # Select dates for the filter
-        selected_dates = st.multiselect(
-            "Select dates (leave empty for overview of all dates):",
-            options=list(date_options.keys()),
-            default=[]  # Default to no dates selected for overview
-        )
-        
-        # Convert back to internal format
-        selected_date_codes = [date_options[date] for date in selected_dates]
-    else:
-        st.warning("No log data found")
-        selected_date_codes = []
     
     # Refresh button
     if st.button("🔄 Refresh Data"):
@@ -662,31 +682,28 @@ if dates_to_load:
         if selected_user:
             st.header(f"📊 Analytics for {selected_user}")
             
-            # User-specific metrics
-            if user_stats:
-                col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
-                with col1:
-                    st.metric("User Sessions", user_stats.get('total_sessions', 0))
-                with col2:
-                    st.metric("Interactions", user_stats.get('total_interactions', 0))
-                with col3:
-                    st.metric("Avg Response Time", f"{user_stats.get('avg_duration_ms', 0):.0f}ms")
-                with col4:
-                    total_tokens = user_stats.get('total_input_tokens', 0) + user_stats.get('total_output_tokens', 0)
-                    st.metric("Total Tokens", f"{total_tokens:,}")
-                with col5:
-                    total_chars = user_stats.get('total_input_chars', 0) + user_stats.get('total_output_chars', 0)
-                    st.metric("Total Characters", f"{total_chars:,}")
-                with col6:
-                    st.metric("RAG Usage", user_stats.get('rag_usage_count', 0))
-                with col7:
-                    st.metric("Guardrail Failures", user_stats.get('guardrail_failures', 0))
-                
-                # User activity timeline
-                if user_stats.get('first_activity') and user_stats.get('last_activity'):
-                    st.write(f"**Activity Period:** {user_stats['first_activity'].strftime('%Y-%m-%d %H:%M')} to {user_stats['last_activity'].strftime('%Y-%m-%d %H:%M')}")
-            else:
-                st.info(f"No interaction data found for {selected_user} in the selected date range.")
+            # User-specific metrics (user is already filtered by date selection)
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+            with col1:
+                st.metric("User Sessions", user_stats.get('total_sessions', 0))
+            with col2:
+                st.metric("Interactions", user_stats.get('total_interactions', 0))
+            with col3:
+                st.metric("Avg Response Time", f"{user_stats.get('avg_duration_ms', 0):.0f}ms")
+            with col4:
+                total_tokens = user_stats.get('total_input_tokens', 0) + user_stats.get('total_output_tokens', 0)
+                st.metric("Total Tokens", f"{total_tokens:,}")
+            with col5:
+                total_chars = user_stats.get('total_input_chars', 0) + user_stats.get('total_output_chars', 0)
+                st.metric("Total Characters", f"{total_chars:,}")
+            with col6:
+                st.metric("RAG Usage", user_stats.get('rag_usage_count', 0))
+            with col7:
+                st.metric("Guardrail Failures", user_stats.get('guardrail_failures', 0))
+            
+            # User activity timeline
+            if user_stats.get('first_activity') and user_stats.get('last_activity'):
+                st.write(f"**Activity Period:** {user_stats['first_activity'].strftime('%Y-%m-%d %H:%M')} to {user_stats['last_activity'].strftime('%Y-%m-%d %H:%M')}")
         else:
             st.header(header_text)
             
@@ -706,59 +723,18 @@ if dates_to_load:
             
         st.markdown("---")
         
-        # Filters
-        col1, col2 = st.columns(2)
-        with col1:
-            # Session filter
-            if 'session_id' in df.columns:
-                unique_sessions = df['session_id'].dropna().unique()
-                selected_session = st.selectbox(
-                    "Select Session:",
-                    options=[''] + list(unique_sessions),
-                    format_func=lambda x: f"Session {x[:8]}..." if x else "All Sessions"
-                )
-        
-        # with col2:
-        #     # Model filter
-        #     if 'data.model' in df.columns:
-        #         unique_models = df[df['event'] == 'INTERACTION']['data.model'].dropna().unique()
-        #         selected_model = st.selectbox(
-        #             "Filter by Model:",
-        #             options=[''] + list(unique_models),
-        #             format_func=lambda x: x if x else "All Models"
-        #         )
-        
-        # Apply filters
-        filtered_df = df.copy()
-        if selected_session:
-            # st.write(f"Filtering for session: {selected_session}")
-            # st.write(f"Records before session filter: {len(filtered_df)}")
-            
-            # Get the file(s) for this session
-            session_files = filtered_df[filtered_df['session_id'].astype(str) == str(selected_session)]['source_file'].unique()
-            
-            # Filter by file instead of session_id
-            filtered_df = filtered_df[filtered_df['source_file'].isin(session_files)]
-            
-            # st.write(f"Records after session filter: {len(filtered_df)}")
-            if len(filtered_df) > 0:
-                # st.write("Events in session:", sorted(filtered_df['event'].unique()))
-                # st.write("Log file:", session_files[0])
-                # st.write("Sample data from session:")
-                # st.write(filtered_df.head(1).to_dict('records'))
-                pass
-            else:
-                st.info("No records found for selected session")
-            # st.write("Available session IDs:", sorted(df['session_id'].unique()))
-        
-        # if selected_model:
-        #     st.write(f"Filtering for model: {selected_model}")
-        #     model_mask = (filtered_df['data.model'] == selected_model) | (filtered_df['event'] != 'INTERACTION')
-        #     filtered_df = filtered_df[model_mask]
-        
+        # Filter data based on user selection (users are already filtered by date selection in sidebar)
+        if selected_user:
+            # Filter for the selected user
+            user_df = df[df['user_id'] == selected_user] if 'user_id' in df.columns else df[df['file_user_id'] == selected_user]
+            filtered_df = user_df
+        else:
+            # Show all data
+            filtered_df = df.copy()
+
         # Tabs for different views (only show detailed tabs when dates are selected)
         if selected_date_codes:
-            tab1, tab2, tab3 = st.tabs(["📊 Session Details", "⚡ Performance", "📋 Raw Logs"])
+            tab1, tab2, tab3 = st.tabs(["📊 User Details", "⚡ Performance", "📋 Raw Logs"])
         elif not selected_user:
             # Show overview insights only when no user is selected and no dates are selected
             st.markdown("---")
@@ -783,19 +759,19 @@ if dates_to_load:
                         avg_docs_per_user = len(user_documents) / stats.get('unique_users', 1)
                         st.write(f"**Average documents per user:** {avg_docs_per_user:.1f}")
             
-            st.info("Select specific dates above to view detailed analytics and session information.")
+            st.info("Select specific dates above to view detailed analytics and user information.")
         else:
             # When a user is selected but no dates are selected, show a message
             st.markdown("---")
-            st.info("Select specific dates above to view detailed analytics and session information for this user.")
+            st.info("Select specific dates above to view detailed analytics and user information for this user.")
             
             
         
         if selected_date_codes:
             with tab1:
-                if selected_session:
-                    # Detailed session view
-                    session_details = analytics.get_session_details(df, selected_session)
+                if selected_user:
+                    # Get detailed session view (user is already filtered by date selection)
+                    session_details = analytics.get_session_details(df, selected_user)
                     
                     if session_details:
                         # Session overview
@@ -884,18 +860,17 @@ if dates_to_load:
                             st.subheader("Errors")
                             for error in session_details['errors']:
                                 st.error(f"{error['timestamp'].strftime('%H:%M:%S')}: {error['message']}")
-                    else:
-                        st.info("No details found for this session")
                 else:
-                    st.info("Select a session to view details")
+                    st.info("Select a user to view details")
             
             with tab2:
                 
-                if not selected_session:
-                    st.info("Select a session to view performance details")
+                if not selected_user:
+                    st.info("Select a user to view performance details")
                 else:
-                    # Response time visualization
+                    # Get interaction data (user is already filtered by date selection)
                     interaction_df = filtered_df[filtered_df['event'] == 'INTERACTION']
+                    
                     if not interaction_df.empty and 'duration_ms' in interaction_df.columns:
                         # Create line plot of response times
                         # Add message number if it doesn't exist
@@ -995,11 +970,12 @@ if dates_to_load:
                             st.metric("Total Tokens", f"{(plot_df['Input Tokens'].sum() + plot_df['Output Tokens'].sum()):,}")
             
             with tab3:
-                
-                
-                if selected_session:
-                    # Show recent events for the selected session
-                    display_df = filtered_df.sort_values('timestamp', ascending=False)
+                if selected_user:
+                    # Show recent events for the selected user
+                    if not filtered_df.empty:
+                        display_df = filtered_df.sort_values('timestamp', ascending=False)
+                    else:
+                        display_df = pd.DataFrame()
                     
                     # Select columns to display based on logger.py structure
                     display_columns = [
@@ -1032,13 +1008,13 @@ if dates_to_load:
                         st.download_button(
                             label="Download as CSV",
                             data=csv,
-                            file_name=f"session_{selected_session}_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            file_name=f"user_{selected_user}_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                             mime="text/csv"
                         )
                     else:
-                        st.info("No log data available for this session")
+                        st.info("No log data available for this user")
                 else:
-                    st.info("Select a session to view raw logs")
+                    st.info("Select a user to view raw logs")
     
     else:
         st.warning("No data found for the selected date range")
