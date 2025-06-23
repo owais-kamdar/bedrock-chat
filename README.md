@@ -1,27 +1,106 @@
-# BedrockChat
+# BedrockChat - Final Project
 
-A further implemenation of Bedrock chat interface from v1 (week1).
-A streamlit based chat interface for Amazon Bedrock foundation models with a Streamlit frontend and Flask API backend. Currently supports Claude, Nova, and Mistral models with session management and usage logging. Supports RAG based knowledge for Neuroscience materials.
+A final implementation of Bedrock chat interface.
+A streamlit based chat interface for Amazon Bedrock foundation models with a Streamlit frontend and Flask API backend. Currently supports Claude, Nova, Mistral, and Pixtral models with user management and usage logging. Supports RAG based knowledge for Neuroscience materials and user-uploaded documents.
+
+## Goals and Use Cases
+
+### Project Goals
+This project demonstrates the development of a production-ready customizable RAG (Retrieval Augmented Generation) system that showcases:
+
+1. **Multi-Model AI Integration**: Seamless integration with AWS Bedrock foundation models (Claude-2, Nova, Mistral)
+2. **RAG Implementation**: Sophisticated document processing and semantic search capabilities
+5. **Production Deployment**: Cloud-ready with AWS App Runner deployment
+
+### Primary Use Cases
+
+#### 1. **Research Assistant**
+- **Functionality**: Query pre-loaded neuroscience materials (Brain Facts Book, Neuroscience: Science of the Brain)
+
+#### 2. **Personal Knowledge Management**
+- **Functionality**: Upload personal PDF/TXT documents for personalized RAG system
+able document processing with comprehensive logging
+
+#### 3. **AI Model Comparison Platform**
+- **Functionality**: Test different foundation models (Claude, Nova, Mistral) on same queries
+
+
+## Project Structure
+
+```
+bedrock/
+├── src/                   
+│   ├── core/              
+│   │   ├── bedrock.py     
+│   │   ├── rag.py         
+│   │   ├── vector_store.py 
+│   │   ├── initialize_rag.py 
+│   │   ├── config.py     
+│   │   └── README.md     
+│   ├── app/              
+│   │   ├── flaskapp.py   
+│   │   └── README.md     
+│   ├── ui/               
+│   │   ├── streamlit_app.py 
+│   │   ├── dashboard.py   
+│   │   └── README.md      
+│   ├── utils/             
+│   │   ├── logger.py      
+│   │   ├── user_manager.py 
+│   │   └── README.md      
+│   └── README.md          
+├── tests/                 
+│   ├── test_bedrock.py    
+│   └── README.md          
+├── config/                
+│   ├── .env               
+│   └── README.md          
+├── logs/                  
+├── run_api.py             # Flask API entry point
+├── run_streamlit.py       # Streamlit UI entry point
+├── run_dash.py            # Dashboard entry point
+├── run_initialize.py      # RAG system initialization entry point
+├── requirements.txt       
+└── README.md              
+```
+
 ## Current Features
 
-- Multiple Bedrock Models:
+- **Multiple Bedrock Models**:
   - Claude-2
   - Nova
   - Mistral
-- Guardrail Support
+- **Guardrail Support**:
   - Prompt and response filters
   - Profanity and topic blocking
   - PII Blocks/Masks
-- Comprehensive Dashboard
+- **User Management**:
+  - Sequential user IDs (user-1, user-2, etc.)
+  - API key generation and validation
+  - User-specific document storage
+- **Comprehensive Dashboard**:
   - Usage statistics
-  - Session Filtering
+  - User filtering
   - Token count, response time, conversation history, etc
-- API Key Authentication
-- RAG (Retrieval Augmented Generation)
+- **RAG (Retrieval Augmented Generation)**:
   - PDF document indexing
-  - Semantic search with Pinecone
-- Test Suite
-  - Current coverage: 62%
+  - Semantic search with Pinecone DB
+  - Multiple context sources (Neuroscience Guide, User Documents, Both)
+- **File Upload System**:
+  - Upload PDF and TXT files only
+  - Automatic document processing and indexing
+  - User-specific document management
+  - Personal knowledge base creation
+- **Test Suite**:
+  - Core module coverage:
+    - `initialize_rag.py`: 97%  
+    - `config.py`: 86%  
+    - `logger.py`: 85%
+    - `user_manager.py`: 75%
+    - `bedrock.py`: 70%
+    - `vector_store.py`: 70%
+    - `rag.py`: 67%
+    - `flaskapp.py`: 59%
 
 ## Setup
 
@@ -38,160 +117,130 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Create a `.env` file with your credentials:
-```
-# Required
-API_KEY=your-secret-key
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_DEFAULT_REGION=us-east-1
-
-# Guardrails and RAG Configuration
-BEDROCK_GUARDRAIL_ID=your-guardrail-id
-RAG_BUCKET=your-s3-bucket-name
-PINECONE_API_KEY=your-pinecone-api-key
-PINECONE_ENVIRONMENT=your-pinecone-environment
-```
+3. Set up configuration:
+   - See [`config/README.md`](config/README.md) for detailed configuration options and environment variables
 
 ## Usage
 
 1. Initialize the RAG system (first time only):
 ```bash
-python initialize_rag.py
+python run_initialize.py
 ```
 
 2. Start the Flask API:
 ```bash
-python app.py
+python run_api.py
 ```
 
 3. In a separate terminal, start the Streamlit interface:
 ```bash
-python streamlit run streamlit.py
+python run_streamlit.py
 ```
 
-4. To access the dashboard open a new terminal and run:
+4. To access the dashboard:
 ```bash
-python streamlit run dashboard.py
+python run_dash.py
 ```
 
 Access the UI at `http://localhost:8501`
 
-## Architecture
+## User Management
 
-- `app.py` - Flask API with authentication and model endpoints
-- `bedrock.py` - Bedrock client and model handling
-- `streamlit.py` - Web interface and chat management
-- `logger.py` - Session and interaction logging
-- `tests.py` - Overall test suite for pipeline
-- `initialize_rag.py` - Script for setting up and indexing RAG documents
-- `vector_store.py` - Vector database interface for document storage and retrieval
-- `rag.py` - RAG system for document processing and context retrieval
-- `api_manager.py` - API key management and authentication
-- `dashboard.py` - Analytics dashboard for session monitoring and performance metrics
+### User IDs
+- Sequential format: `user-1`, `user-2`, `user-3`, etc.
+- Automatically generated for new users
+
+### API Keys
+- One API key per user
+
+
+## File Upload Features
+
+### Uploading Documents
+1. In the Streamlit sidebar, use the file uploader to select PDF or TXT files
+2. Click "Upload & Index File" to process and index your document
+3. Your document will be automatically chunked, embedded, and stored in your personal namespace
+
+### Managing Your Documents
+- View all uploaded files in the "Your Documents" section
+- See file details including size and upload date
+- Delete files you no longer need
+- All documents are stored securely in S3 with user-specific namespaces
+
+### Using Your Documents
+- Select "Your Documents" or "Both" in the Context Source setting
+- The system will search your uploaded documents for relevant context
+- Combine your documents with the neuroscience guide for comprehensive responses
+
 
 ## API Endpoints
 
-- `POST /chat/<session_id>` - Send a message in a chat session with optional RAG context
-- `GET /models` - List available models (claude-2, nova, mistral)
-- `POST /test` - Test endpoint for direct model interaction
-- `POST /api-keys` - Creating API keys
+### User Management
+- `POST /api-keys` - Create API key for a user
+- `GET /health` - Health check endpoint
 
-All endpoints require an `X-API-KEY` header matching the one in your `.env` file.
+### Chat Interface
+- `POST /chat/{user_id}` - Send message to AI model
+  - Use `user_id="new"` to generate a new user
+  - `context_source`: "Neuroscience Guide", "Your Documents", "Both", "None"
 
-## Logging (Updated)
-
-Logs are stored in S3 under the `logs/` folder with detailed metrics for each interaction:
-- Message counts and timestamps
-- Input/output character and token counts
-- Model selection
-- Response times
-- Guardrail results
-
-## Future Plans
-
-### 1. RAG Integration -- WEEK 4
-- S3-based document storage
-- Document embedding and retrieval
-- Context injection into prompts
-
-### 2. Enhanced Guardrails -- WEEK 4
-- Custom safety filters
-- Topic-based filtering
-- Response quality checks
-
-### 3. Security -- WEEK 5
-- API management
-- Data Privacy (AWS S3)
-
-### 4. Analytics -- WEEK 5
-- Dashboards
-- Reports
-
-### 5. Deployment
-- AWS deployment options:
-  - App Runner
-  - EC2
-- Monitoring and alerts
+### File Management
+- `POST /upload/{user_id}` - Upload documents for a user
+- `GET /files/{user_id}` - List user uploaded files
+- `DELETE /files/{user_id}` - Delete a user uploaded file
 
 
-## Development
+## Testing
 
-Run tests:
+### Run Test Suite
 ```bash
-pytest tests.py -v --cov=. --cov-report=term-missing
+# Run all tests with coverage
+python -m pytest tests/test_bedrock.py --cov=src --cov-report=term-missing -v
 ```
 
-## Weekly Updates
+## Development Timeline
 
-### Week 4: RAG System Integration
-The project now includes a fully functional Retrieval Augmented Generation (RAG) system with the following features:
-
-
-- **Document Processing and Vector Store**
-  - Text chunking with overlap for context preservation
-  - Batch processing for embeddings
-  - Pinecone serverless vector database integration using GRPC
-  - Document chunking and embedding generation
-
-- **Search and Retrieval**
-  - Semantic similarity search using Llama embeddings
-  - Configurable relevance scoring and filtering
-
-- **Integration with Chat Interface**
-  - Toggle for RAG-enhanced responses
-
-- **Added Data for Tracking**
-  - source
-  - page numbers 
-  - chunks and scores
-  - timestamps
-
-- **Current Documents: Neuroscience**
-  - [Brain Facts Book](https://www.brainfacts.org/-/media/Brainfacts2/BrainFacts-Book/Brain_Facts_BookHighRes.pdf)
-  - [Neuroscience: Science of the Brain](https://brain.mcmaster.ca/BrainBee/Neuroscience.Science.of.the.Brain.pdf)
+### Week 1: Foundation Setup
+**Initial Bedrock System with Model Calls through Streamlit Interface**
+- Basic Streamlit interface for AWS Bedrock integration
+- Initial Claude-2 model support
+- Simple chat functionality
 
 
-### Week 5: Dashboarding and Security
-Built a comprehensive dashboard on a streamlit interface and added API key management for better app security:
+### Week 2: Different Project -- Seperate Repo
+**Separate Local Mistral Chat with Dashboard**
+- Mistral model locally 
+- Initial dashboard concepts for usage tracking
 
-- **Analytics Dashboard**
-  - Session-based analytics with detailed metrics
-  - Conversation history with detailed message stats
 
-- **Data Visualization**
-  - Response time tracking by message
-  - Input/output token usage metrics
+### Week 3: API Integration & Security
+**Additional Models Support with Flask App Integration**
+- Flask API backend development (`flaskapp.py`)
+- Session management and logging infrastructure
+- Guardrails implementation through AWS Bedrock
 
-- **Security and API Management**
-  - API key generation and management
-  - User-based access control
-  - Secure key storage and validation
+### Week 4: RAG System Implementation
+**RAG System using S3 and Pinecone**
+- **Document Processing**: Text chunking 
+- **Vector Store**: Pinecone DB for Storage
+- **Embeddings**: Automated document chunking and embedding generation
+- **Additional Security**: Enhanced guardrail filters for content safety
 
-- **AWS S3 Storage**
-  - Centralized storage for logs, RAG documents, and API keys
-  - Organized folder structure: `/logs/`, `/rag/`, `/api_keys/`
-  
+### Week 5: Analytics & Centralized Storage
+**Dashboard System and S3 Integration**
+- **Analytics Dashboard**: Session-based analytics with detailed metrics and user filtering
+- **Data Visualization**: Response time tracking, token usage metrics, conversation history
+- **AWS S3 Storage**: Centralized storage architecture with organized folder structure (`/logs/`, `/rag/`, `/api_keys/`)
+
+### Week 6: Personalization & Deployment
+**User Upload Integration and Production Readiness**
+- **Personal RAG**: User-specific document upload and indexing system
+- **Context Sources**: Multiple options (Neuroscience Guide, User Documents, Both, None)
+- **Production Features**: Error handling, rate limiting, logging
+- **Documentation**: Thorough documentation and setup
+- **Deployment**:  Using AWS App Runner
+
+
 ## License
 
-MIT License
+This project is licensed under the MIT License.
