@@ -1,0 +1,19 @@
+version: 1.0
+runtime: python3
+build:
+  commands:
+    build:
+      - echo "Installing dependencies..."
+      - pip install --upgrade pip
+      - pip install -r requirements.txt
+run:
+  runtime-version: 3.13
+  command: python run_streamlit.py
+  network:
+    port: 8501
+    env: PORT
+  env:
+    - name: PORT
+      value: "8501"
+    - name: PYTHONPATH
+      value: "/opt/app" 

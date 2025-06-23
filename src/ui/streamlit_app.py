@@ -18,7 +18,7 @@ import io
 load_dotenv("config/.env")
 
 # API settings
-API_URL = "http://127.0.0.1:5001"
+API_URL = os.getenv("API_URL", "http://127.0.0.1:5001")
 
 # Configure page
 st.set_page_config(

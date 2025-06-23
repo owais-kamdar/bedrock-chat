@@ -216,7 +216,7 @@ def test_multiple_models(mock_bedrock):
         body=ANY
     )
 
-    # Test invalid model
+    # test invalid model
     with pytest.raises(Exception) as exc:
         call_bedrock([{"role": "user", "content": "Hello"}], "invalid_model")
     assert "Unsupported model: invalid_model" in str(exc.value)
@@ -231,7 +231,7 @@ def test_bedrock_supported_models():
 @patch('src.core.bedrock.bedrock')
 def test_bedrock_error_scenarios(mock_bedrock):
     """Test Bedrock error handling scenarios"""
-    # Test API error handling
+    # test API error handling
     mock_bedrock.invoke_model.side_effect = Exception("API Error")
     
     with pytest.raises(Exception) as exc_info:
@@ -239,7 +239,6 @@ def test_bedrock_error_scenarios(mock_bedrock):
     
     assert "error calling bedrock" in str(exc_info.value).lower()
 
-# ===== User Manager Tests =====
 def test_user_manager_user_id_generation(user_manager_fixture):
     """Test user ID generation"""
     # Test basic user ID generation
@@ -302,14 +301,14 @@ def test_user_manager_api_key_operations(user_manager_fixture):
     """Test API key creation and validation"""
     user_id = "user-123"
     
-    # Test API key generation
+    # test API key generation
     api_key = user_manager_fixture.create_api_key(user_id)
     
     assert isinstance(api_key, str)
     assert api_key.startswith("bdrk_")
     assert len(api_key) > 15  # Should have format: bdrk_YYMMDD_10chars
     
-    # Test API key format
+    # test API key format
     parts = api_key.split("_")
     assert len(parts) == 3
     assert parts[0] == "bdrk"
@@ -324,11 +323,11 @@ def test_user_manager_s3_disabled():
         
         assert not manager.s3_enabled
         
-        # Should still generate user IDs using fallback
+        # should still generate user IDs using fallback
         user_id = manager.generate_user_id()
         assert user_id.startswith("user-")
         
-        # API key operations should fail gracefully
+        # api key operations should fail gracefully
         with pytest.raises(ValueError, match="S3 not enabled"):
             manager.create_api_key("test_user")
 
@@ -437,15 +436,15 @@ def test_vector_store_document_operations(vector_store):
         )
     ]
     
-    # Add documents to store
+    # add documents to store
     success = vector_store.add_documents(docs)
     assert success
     
-    # Test search
+    # test search
     results = vector_store.search("brain function", top_k=2)
     assert isinstance(results, list)
     
-    # Verify result format if we have results
+    # verify result format if we have results
     if results:
         doc, score = results[0]
         assert isinstance(doc, Document)
@@ -454,11 +453,11 @@ def test_vector_store_document_operations(vector_store):
 
 def test_vector_store_error_handling(vector_store):
     """Test vector store error handling"""
-    # Test search with invalid namespace
+    # test search with invalid namespace
     results = vector_store.search("test", namespace="nonexistent")
     assert isinstance(results, list)
     
-    # Test adding empty documents
+    # test adding empty documents
     success = vector_store.add_documents([])
     assert success is True
 
@@ -479,7 +478,6 @@ def test_configuration_loading():
     assert isinstance(ALLOWED_USER_FILE_TYPES, set)
     assert len(ALLOWED_USER_FILE_TYPES) > 0
 
-# ===== Integration Tests =====
 def test_basic_workflow_integration():
     """Test basic workflow components integration"""
     # Test RAG system initialization
@@ -496,7 +494,6 @@ def test_basic_workflow_integration():
     doc = Document(content="Test content", metadata={"source": "test"})
     assert doc.content == "Test content"
 
-# ===== Advanced RAG System Tests =====
 def test_rag_file_upload_validation():
     """Test file upload validation and processing"""
     rag = RAGSystem()
@@ -515,7 +512,7 @@ def test_rag_file_upload_validation():
     result = rag.upload_user_file(
         file_content=b"",
         filename="empty.txt",
-        user_id="test_user", 
+                    user_id="test_user",
         file_type="txt"
     )
     assert result["success"] is False
@@ -524,7 +521,7 @@ def test_rag_file_upload_validation():
 @patch('src.core.rag.get_s3_client')
 def test_rag_user_file_upload_success(mock_s3_client):
     """Test successful user file upload with mocking"""
-    # Mock S3 client
+    # mock S3 client
     mock_s3 = MagicMock()
     mock_s3_client.return_value = mock_s3
     mock_s3.put_object.return_value = {}
@@ -535,11 +532,11 @@ def test_rag_user_file_upload_success(mock_s3_client):
     with patch.object(rag, 'index_documents', return_value=True):
         result = rag.upload_user_file(
             file_content=b"This is test content for a text file.",
-            filename="test.txt",
-            user_id="test_user",
-            file_type="txt"
-        )
-    
+                    filename="test.txt",
+                    user_id="test_user",
+                    file_type="txt"
+                )
+
     assert result["success"] is True
     assert result["filename"] == "test.txt"
     assert "documents_indexed" in result
@@ -614,16 +611,16 @@ def test_rag_context_retrieval_methods():
     """Test different context retrieval methods"""
     rag = RAGSystem()
     
-    # Test neuroscience context when no namespace exists
+    # test neuroscience context when no namespace exists
     context = rag.get_neuroscience_context("test query")
     assert isinstance(context, str)
     
-    # Test context with stats
+    # test context with stats
     context, results = rag.get_neuroscience_context_with_stats("test query")
     assert isinstance(context, str)
     assert isinstance(results, list)
     
-    # Test user context when no documents exist
+    # test user context when no documents exist
     user_context = rag.get_user_context("test query", "test_user")
     assert isinstance(user_context, str)
 
@@ -667,7 +664,6 @@ def test_rag_neuroscience_indexing(mock_s3_client):
         success = rag.index_neuroscience_documents()
         assert success is True
 
-# ===== Initialize RAG Tests =====
 @patch('src.core.initialize_rag.validate_required_env_vars')
 @patch('src.core.initialize_rag.RAGSystem')
 def test_initialize_rag_success(mock_rag_system, mock_validate):
@@ -694,7 +690,7 @@ def test_initialize_rag_missing_env_vars(mock_validate):
     """Test RAG initialization with missing environment variables"""
     from src.core.initialize_rag import main
     
-    # Mock missing environment variables
+    # mock missing environment variables
     mock_validate.return_value = ['PINECONE_API_KEY', 'RAG_BUCKET']
     
     # Should handle missing env vars gracefully
@@ -708,10 +704,10 @@ def test_initialize_rag_indexing_failure(mock_rag_system, mock_validate):
     """Test RAG initialization with indexing failure"""
     from src.core.initialize_rag import main
     
-    # Mock successful validation
+    # mock successful validation
     mock_validate.return_value = []
     
-    # Mock failed indexing
+    # mock failed indexing
     mock_rag_instance = MagicMock()
     mock_rag_instance.index_neuroscience_documents.return_value = False
     mock_rag_system.return_value = mock_rag_instance
@@ -738,7 +734,6 @@ def test_initialize_rag_system_exception(mock_rag_system, mock_validate):
     
     mock_rag_system.assert_called_once()
 
-# ===== Advanced Vector Store Tests =====
 def test_vector_store_initialization_errors():
     """Test vector store initialization error handling"""
     with patch('src.core.vector_store.PINECONE_API_KEY', None):
