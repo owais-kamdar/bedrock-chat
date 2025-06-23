@@ -3,6 +3,8 @@
 A final implementation of Bedrock chat interface.
 A streamlit based chat interface for Amazon Bedrock foundation models with a Streamlit frontend and Flask API backend. Currently supports Claude, Nova, Mistral, and Pixtral models with user management and usage logging. Supports RAG based knowledge for Neuroscience materials and user-uploaded documents.
 
+## [Live App](https://bedrock-chat-sby86tmaraw9jrsdevstvz.streamlit.app/)
+
 ## Goals and Use Cases
 
 ### Project Goals
