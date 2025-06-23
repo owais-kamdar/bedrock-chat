@@ -3,7 +3,7 @@
 A final implementation of Bedrock chat interface.
 A streamlit based chat interface for Amazon Bedrock foundation models with a Streamlit frontend and Flask API backend. Currently supports Claude, Nova, Mistral, and Pixtral models with user management and usage logging. Supports RAG based knowledge for Neuroscience materials and user-uploaded documents.
 
-## [Live App](https://bedrock-chat-sby86tmaraw9jrsdevstvz.streamlit.app/)
+## [Live App](https://bedrock-chat-1.onrender.com/)
 
 ## Goals and Use Cases
 
@@ -25,6 +25,54 @@ able document processing with comprehensive logging
 
 #### 3. **AI Model Comparison Platform**
 - **Functionality**: Test different foundation models (Claude, Nova, Mistral) on same queries
+
+
+### What I learned
+
+Throughout this project, I gained hands-on experience with:
+
+**AWS Cloud Infrastructure:**
+- AWS Bedrock for foundation model APIs (Claude, Nova, Mistral)
+- S3 for document storage and user file management
+- App Runner for containerized deployments
+- IAM roles and security policies
+
+**Production-Level Development:**
+- Building scalable RAG (Retrieval-Augmented Generation) systems
+- Implementing user authentication and API key management
+- Content filtering with AWS Bedrock Guardrails
+
+**System Architecture & Integration:**
+- Designing microservices with Flask API backend
+- Creating responsive frontends with Streamlit
+- Vector database operations with Pinecone
+- Seamless module integration and dependency management
+
+**DevOps & Deployment:**
+- Automated deployments with Render.com
+- Environment variable management
+- Git workflow and version control
+- Comprehensive testing with pytest
+
+**Security & Best Practices:**
+- API authentication and authorization
+- Input/output validation and sanitization
+- Secure credential management
+
+**Documentation & Monitoring:**
+- API documentation with Swagger/OpenAPI
+- Production monitoring and debugging
+
+### [Additional Learning (Week 2)](https://github.com/owais-kamdar/mistral-chat)
+
+In parallel with this project, I explored local AI model deployment through a separate repository:
+
+**Local Model Experimentation:**
+- Setting up and running Mistral 7B locally without external dependencies
+- Command-line interface development for AI interactions
+- Understanding the differences between local vs. hosted model architectures
+
+This comparative experience helped deepen my understanding of the trade-offs between local and cloud-based AI solutions.
 
 
 ## Project Structure
@@ -94,7 +142,7 @@ bedrock/
   - User-specific document management
   - Personal knowledge base creation
 - **Test Suite**:
-  - Core module coverage:
+  - Core module coverage: 
     - `initialize_rag.py`: 97%  
     - `config.py`: 86%  
     - `logger.py`: 85%
@@ -103,6 +151,8 @@ bedrock/
     - `vector_store.py`: 70%
     - `rag.py`: 67%
     - `flaskapp.py`: 59%
+
+    ### - Average Coverage: 76%
 
 ## Setup
 
@@ -115,7 +165,7 @@ cd bedrock
 2. Create a virtual environment and install dependencies:
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -144,7 +194,6 @@ python run_streamlit.py
 python run_dash.py
 ```
 
-Access the UI at `http://localhost:8501`
 
 ## User Management
 
@@ -156,7 +205,7 @@ Access the UI at `http://localhost:8501`
 - One API key per user
 
 
-## File Upload Features
+## File Upload
 
 ### Uploading Documents
 1. In the Streamlit sidebar, use the file uploader to select PDF or TXT files
@@ -170,9 +219,8 @@ Access the UI at `http://localhost:8501`
 - All documents are stored securely in S3 with user-specific namespaces
 
 ### Using Your Documents
-- Select "Your Documents" or "Both" in the Context Source setting
+- Select Your choice for context in the Context Source setting
 - The system will search your uploaded documents for relevant context
-- Combine your documents with the neuroscience guide for comprehensive responses
 
 
 ## API Endpoints
@@ -237,10 +285,9 @@ python -m pytest tests/test_bedrock.py --cov=src --cov-report=term-missing -v
 ### Week 6: Personalization & Deployment
 **User Upload Integration and Production Readiness**
 - **Personal RAG**: User-specific document upload and indexing system
-- **Context Sources**: Multiple options (Neuroscience Guide, User Documents, Both, None)
 - **Production Features**: Error handling, rate limiting, logging
 - **Documentation**: Thorough documentation and setup
-- **Deployment**:  Using AWS App Runner
+- **Deployment**:  Using Render
 
 
 ## License
