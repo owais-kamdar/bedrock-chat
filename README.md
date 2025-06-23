@@ -11,7 +11,7 @@ A streamlit based chat interface for Amazon Bedrock foundation models with a Str
 This project demonstrates the development of a production-ready customizable RAG (Retrieval Augmented Generation) system that showcases:
 
 1. **Multi-Model AI Integration**: Seamless integration with AWS Bedrock foundation models (Claude-2, Nova, Mistral)
-2. **RAG Implementation**: Sophisticated document processing and semantic search capabilities
+2. **RAG Implementation**: Document processing and semantic search capabilities
 5. **Production Deployment**: Cloud-ready with AWS App Runner deployment
 
 ### Primary Use Cases
