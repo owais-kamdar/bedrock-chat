@@ -2,11 +2,18 @@
 Streamlit interface for BedrockChat
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Add the project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 import streamlit as st
 import requests
 from src.core.bedrock import SUPPORTED_MODELS
 from dotenv import load_dotenv
-import os
 from src.core.rag import RAGSystem
 from src.utils.user_manager import user_manager
 from src.core.config import ALLOWED_USER_FILE_TYPES, DEFAULT_TOP_K
@@ -15,7 +22,7 @@ import uuid
 import io
 
 # Load environment variables
-load_dotenv("config/.env")
+load_dotenv(project_root / "config" / ".env")
 
 # API settings
 API_URL = os.getenv("API_URL", "http://127.0.0.1:5001")
