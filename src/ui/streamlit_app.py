@@ -214,6 +214,7 @@ with st.sidebar:
     context_source = st.radio(
         "Context Source",
         ["Neuroscience Guide", "Your Documents", "Both", "None"],
+        index=3,  # Default to "None"
         help="Choose which documents to use for context"
     )
     
