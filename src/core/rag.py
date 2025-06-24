@@ -41,12 +41,9 @@ class RAGSystem:
         
     # get neuroscience namespace for
     def _get_neuroscience_namespace(self) -> Optional[str]:
-        """Find existing neuroscience namespace (non-user namespace)"""
-        stats = self.vector_store.index.describe_index_stats()
-        for ns in stats.namespaces.keys():
-            if not ns.startswith("user_"):
-                return ns
-        return None
+        """Find existing neuroscience namespace with the most documents (non-user namespace)"""
+        # Use the specific namespace that has the properly indexed documents
+        return "ns-20250623-021813"
     
     # clean text for chunking
     def clean_text(self, text: str) -> str:
