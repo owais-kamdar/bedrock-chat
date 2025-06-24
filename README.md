@@ -114,7 +114,7 @@ bedrock/
 └── README.md              
 ```
 
-## Current Features
+## Features
 
 - **Multiple Bedrock Models**:
   - Claude-2
@@ -153,6 +153,11 @@ bedrock/
     - `flaskapp.py`: 59%
 
     ### - Average Coverage: 76%
+
+
+## Architecture Diagram
+
+![Architecture Diagram](architecture.png)
 
 ## Setup
 
